@@ -13,7 +13,7 @@
 #import "QBAlbumsViewController.h"
 #import "QBAssetsViewController.h"
 
-@interface QBImagePickerController ()
+@interface QBImagePickerController () <PHPhotoLibraryChangeObserver>
 
 @property (nonatomic, strong) UINavigationController *albumsNavigationController;
 
@@ -55,9 +55,15 @@
         // Set instance
         QBAlbumsViewController *albumsViewController = (QBAlbumsViewController *)self.albumsNavigationController.topViewController;
         albumsViewController.imagePickerController = self;
+        [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     }
     
     return self;
+}
+
+- (void)dealloc
+{
+    [[PHPhotoLibrary sharedPhotoLibrary] unregisterChangeObserver:self];
 }
 
 
@@ -89,12 +95,17 @@
 - (void)setupAssetsViewController
 {
     // Add QBAssetsViewController as a child
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"QBImagePicker" bundle:self.assetBundle];
-    QBAssetsViewController *assetsViewController = [storyboard instantiateViewControllerWithIdentifier:@"QBAssetsViewController"];
-    assetsViewController.imagePickerController = self;
-    assetsViewController.assetCollection = [self getCameraRollImages];
-    assetsViewController.openCameraRollOnLaunch = self.openCameraRollOnLaunch;
-    [self.albumsNavigationController setViewControllers:[NSArray arrayWithObject:assetsViewController] animated:NO];
+    PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
+    if (status == PHAuthorizationStatusAuthorized)
+    {
+        UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"QBImagePicker" bundle:self.assetBundle];
+        QBAssetsViewController *assetsViewController = [storyboard instantiateViewControllerWithIdentifier:@"QBAssetsViewController"];
+        assetsViewController.imagePickerController = self;
+        assetsViewController.assetCollection = [self getCameraRollImages];
+        assetsViewController.openCameraRollOnLaunch = self.openCameraRollOnLaunch;
+        [self.albumsNavigationController setViewControllers:[NSArray arrayWithObject:assetsViewController] animated:NO];
+    }
+
 }
 
 -(PHAssetCollection *)getCameraRollImages
@@ -104,6 +115,13 @@
     PHAssetCollection *assetCollection = fetchResult.firstObject;
     return assetCollection;
    
+}
+
+-(void)photoLibraryDidChange:(PHChange *)changeInstance
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self setupAssetsViewController];
+    });
 }
 
 @end
