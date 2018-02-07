@@ -134,6 +134,12 @@ static CGSize CGSizeScale(CGSize size, CGFloat scale) {
     [self updateCachedAssets];
 }
 
+- (void)viewDidDisappear:(BOOL)animated
+{
+    [super viewDidDisappear:animated];
+    [self.imagePickerController.selectedAssets removeAllObjects];
+}
+
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
 {
     // Save indexPath for the last item
