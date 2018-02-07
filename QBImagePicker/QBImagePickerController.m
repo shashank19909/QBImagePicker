@@ -119,9 +119,13 @@
 
 -(void)photoLibraryDidChange:(PHChange *)changeInstance
 {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self setupAssetsViewController];
-    });
+    if (self.openCameraRollOnLaunch == YES)
+    {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setupAssetsViewController];
+        });
+    }
+    
 }
 
 @end
